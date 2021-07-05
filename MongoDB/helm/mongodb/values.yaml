@@ -1,0 +1,153 @@
+# Default values for mongodb.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  repository: nb26752/mongo
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "4.2"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext: {}
+  # fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+  # runAsUser: 1000
+
+## Enable authentication
+usePassword: false
+
+## MongoDB admin password
+mongodbRootUsername: root
+mongodbRootPassword: root
+
+secretname: mongosecret
+
+service:
+  type: ClusterIP
+  port: 27017
+
+mongodb:
+  uri: mongo:27017
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+  hosts:
+    - host: chart-example.local
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: []
+
+ ## Number of replicas per each node type
+  replicas:
+    secondary: 1
+
+## Pod Disruption Budget
+  podDisruptionBudget:
+    enabled: false
+    minAvailable:
+      secondary: 1
+    maxUnavailable:
+      secondary: ""
+
+resources:
+    limits:
+      cpu: 250m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+nodeport:
+  name: mongodb-nodeport
+
+updateStrategy:
+  type: RollingUpdate
+
+persistence:
+  mountPath: /data/db
+  subPath: ""
+  storageClassName: "standard"
+  accessModes: ReadWriteOnce
+  size: 2Gi
+  existingClaim: mongopvc
+
+#Storage Class
+storageclass:
+  storageclass:
+  enabled: false
+  name: mongo
+  annotations: {}
+  provisioner: kubernetes.io/gce-pd
+  reclaimPolicy: Delete
+  volumeBindingMode: Immediate
+  parameters:
+    type: pd-standard
+
+livenessProbe:
+  enabled: true
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 6
+  successThreshold: 1
+
+readinessProbe:
+  enabled: true
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 6
+  successThreshold: 1
+
+  livenessProbe:
+    httpGet:
+      path: /
+      port: metrics
+    initialDelaySeconds: 10
+
+  readinessProbe:
+    httpGet:
+      path: /
+      port: metrics
+    initialDelaySeconds: 10
+
+systemLog:
+   destination: file
+   path: "/var/log/mongodb/mongod.log"
+   logAppend: true
+
